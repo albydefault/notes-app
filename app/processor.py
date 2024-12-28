@@ -16,7 +16,7 @@ class NoteProcessor:
         try:
             genai.configure(api_key=api_key)
             # Update: Using the correct model name
-            self.model = genai.GenerativeModel('gemini-1.5-flash-8b')
+            self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
             logging.info("Gemini API initialized successfully")
         except Exception as e:
             logging.error(f"Failed to initialize Gemini API: {str(e)}")
