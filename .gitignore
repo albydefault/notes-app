@@ -1,0 +1,10 @@
+# Root folder
+__pycache__/
+venv/
+
+# App folder
+app/config.py
+app/__pycache__/
+app/processed
+app/processed_notes
+app/uploads
