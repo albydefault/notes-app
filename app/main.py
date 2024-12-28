@@ -20,7 +20,7 @@ logging.basicConfig(
 
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
-from app.config import UPLOAD_DIR, PROCESSED_DIR, GEMINI_API_KEY
+from config import UPLOAD_DIR, PROCESSED_DIR, GEMINI_API_KEY
 
 # Initialize FastAPI app
 app = FastAPI(title="Notes Scanner")
