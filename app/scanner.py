@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 import logging
 import re
+import os
+from PIL import Image
 
 class DocumentScanner:
     def __init__(self, target_height: int = 842):  # A4 height at 100 DPI
@@ -19,30 +21,56 @@ class DocumentScanner:
         try:
             logging.info(f"Starting processing for image: {image_path}")
             
-            # Read image
+            # Read and process the image
             original_image = cv2.imread(str(image_path))
             if original_image is None:
                 logging.error(f"Could not read image at {image_path}")
                 raise ValueError(f"Could not read image at {image_path}")
-            
-            # Process image
+
             processed = self.process_image(original_image)
             if processed is None:
                 logging.error(f"Could not process image at {image_path}")
                 raise ValueError(f"Could not process image at {image_path}")
             
-            # Save processed image
-            sanitized_name = self.sanitize_filename(image_path.stem)
-            output_path = image_path.parent.parent / "processed" / f"scan_{sanitized_name}.jpg"
-            cv2.imwrite(str(output_path), processed)
-            logging.info(f"Image processed successfully: {output_path}")
-            
+            # Convert processed image to PIL Image for compression
+            processed_pil = Image.fromarray(cv2.cvtColor(processed, cv2.COLOR_BGR2RGB))
+            sanitized_filename = self.sanitize_filename(image_path.stem)
+            output_path = image_path.parent.parent / "processed" / f"scan_{sanitized_filename}.jpg"
+            self._save_compressed_image(processed_pil, output_path)
+
+            logging.info(f"Image processed and saved successfully: {output_path}")
             return output_path
 
         except Exception as e:
             logging.error(f"Error processing {image_path}: {str(e)}")
             return None
+        
+    def _save_compressed_image(self, image: Image.Image, output_path: Path, target_size_kb: int = 200):
+        """Save image with compression to ensure size is under target_size_kb."""
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # Start with high quality
+        quality = 95
+        image_format = "JPEG"
+
+        while quality > 10:
+            # Save the image to a temporary location
+            temp_path = str(output_path) + ".temp"
+            image.save(temp_path, format=image_format, quality=quality, optimize=True)
+
+            # Check file size
+            file_size_kb = os.path.getsize(temp_path) / 1024
+            if file_size_kb <= target_size_kb:
+                os.rename(temp_path, output_path)  # Save as final image
+                logging.info(f"Compressed image to {file_size_kb:.2f} KB with quality {quality}")
+                return
+
+            # Reduce quality for the next iteration
+            quality -= 5
+
+        # If compression fails, save the image with the lowest acceptable quality
+        image.save(output_path, format=image_format, quality=10, optimize=True)
+        logging.warning(f"Could not achieve target size. Final size: {os.path.getsize(output_path) / 1024:.2f} KB")
     
 
     def process_image(self, image: np.ndarray) -> Optional[np.ndarray]:
