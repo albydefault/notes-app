@@ -8,3 +8,6 @@ app/__pycache__/
 app/processed
 app/processed_notes
 app/uploads
+
+# Data folder
+db/database.db
