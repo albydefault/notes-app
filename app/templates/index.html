@@ -1,4 +1,3 @@
-<!-- app/templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,6 +81,21 @@
             height: auto;
             border-radius: 4px;
         }
+
+        .generated-links {
+            margin-top: 20px;
+        }
+
+        .generated-links a {
+            display: block;
+            margin-bottom: 5px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .generated-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -110,7 +124,6 @@
             }
 
             const formData = new FormData();
-            
             for (const file of fileInput.files) {
                 formData.append('files', file);
             }
@@ -119,20 +132,20 @@
             status.textContent = 'Uploading and processing...';
             
             try {
-                // First upload and scan the files
+                // Step 1: Upload and scan the files
                 const uploadResponse = await fetch('/upload', {
                     method: 'POST',
                     body: formData
                 });
                 
                 if (!uploadResponse.ok) {
-                    throw new Error(`HTTP error! status: ${uploadResponse.status}`);
+                    throw new Error(`Upload failed: ${uploadResponse.status}`);
                 }
                 
                 const uploadResult = await uploadResponse.json();
                 status.textContent = 'Files scanned. Processing with AI...';
                 
-                // Then process with Gemini
+                // Step 2: Process notes with AI
                 const processResponse = await fetch('/process-notes', {
                     method: 'POST'
                 });
@@ -143,11 +156,10 @@
                 
                 const processResult = await processResponse.json();
                 
-                // Show both the images and the processing result
+                // Display the results
                 status.className = 'success';
                 status.textContent = 'Files processed successfully!';
                 
-                // Display processed images and add a link to the markdown
                 results.innerHTML = `
                     ${uploadResult.processed_files.map(file => `
                         <div class="processed-image">
@@ -155,10 +167,14 @@
                         </div>
                     `).join('')}
                     <div>
-                        <h3>AI Analysis Complete</h3>
+                        <h3>AI Analysis Results</h3>
                         <p><strong>Title:</strong> ${processResult.title}</p>
                         <p><strong>Summary:</strong> ${processResult.summary}</p>
-                        <a href="${processResult.markdown_file}" target="_blank">View Full Analysis</a>
+                        <div class="generated-links">
+                            <a href="${processResult.files.find(f => f.type === 'transcription').file}" target="_blank">View Transcription</a>
+                            <a href="${processResult.files.find(f => f.type === 'exposition').file}" target="_blank">View Exposition</a>
+                            <a href="${processResult.files.find(f => f.type === 'questions').file}" target="_blank">View Question Sheet</a>
+                        </div>
                     </div>
                 `;
             } catch (error) {
