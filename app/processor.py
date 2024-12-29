@@ -1,4 +1,5 @@
 import pathlib
+from pathlib import Path
 from typing import List, Dict, Optional
 import google.generativeai as genai
 from PIL import Image
@@ -22,30 +23,22 @@ class NoteProcessor:
             logging.error(f"Failed to initialize Gemini API: {str(e)}")
             raise
 
-    def _load_images(self, scan_folder: str) -> List[Image.Image]:
-        """Load and validate images from the scan folder."""
-        folder = pathlib.Path(scan_folder)
-        if not folder.exists():
-            raise FileNotFoundError(f"Scan folder not found: {scan_folder}")
-            
-        image_files = sorted(
-            [f for f in folder.glob("*.jpg") if f.name.startswith("scan_")]
-        )
-        
-        if not image_files:
-            raise ValueError(f"No valid image files found in {scan_folder}")
+    def _load_images(self, image_paths: List[Path]) -> List[Image.Image]:
+        """Load and validate specific image files."""
+        if not image_paths:
+            raise ValueError("No image paths provided")
             
         images = []
-        for f in image_files:
+        for path in image_paths:
             try:
-                img = Image.open(f)
+                img = Image.open(path)
                 # Validate image size is within Gemini's limits (10MB per image)
-                if os.path.getsize(f) > 10 * 1024 * 1024:
-                    logging.warning(f"Image {f} exceeds 10MB limit, resizing...")
-                    img.thumbnail((2000, 2000))  # Resize while maintaining aspect ratio
+                if os.path.getsize(path) > 10 * 1024 * 1024:
+                    logging.warning(f"Image {path} exceeds 10MB limit, resizing...")
+                    img.thumbnail((2000, 2000))
                 images.append(img)
             except Exception as e:
-                logging.error(f"Failed to load image {f}: {str(e)}")
+                logging.error(f"Failed to load image {path}: {str(e)}")
                 continue
                 
         return images
@@ -81,15 +74,18 @@ class NoteProcessor:
             logging.error(f"Gemini API error: {str(e)}")
             raise
 
-    def transcribe_notes(self, scan_folder: str) -> Dict[str, str]:
-        """Transcribe all scanned notes with improved error handling."""
-        logging.info(f"Transcribing notes from {scan_folder}")
+    def transcribe_notes(self, image_paths: List[Path]) -> Dict[str, str]:
+        """Transcribe specific notes with improved error handling."""
+        logging.info(f"Transcribing {len(image_paths)} notes")
         
         try:
-            images = self._load_images(scan_folder)
+            images = self._load_images(image_paths)
+            
+            if not images:
+                raise ValueError("No valid images to process")
             
             # Initial prompt for metadata
-            initial_prompt =    """
+            initial_prompt = """
             You are a highly skilled document analyzer. These images are pages of handwritten notes.
             Your task is to analyze the content and return ONLY a JSON object with the following structure, with no additional text or formatting:
             {
@@ -99,18 +95,15 @@ class NoteProcessor:
 
             IMPORTANT: Return ONLY the JSON object with no explanation or additional text.
             """
-
             
             metadata = self._generate_content(initial_prompt, images)
             if "error" in metadata:
                 metadata = {
                     "title": "Untitled Notes",
                     "summary": "Content could not be summarized."
-                }
+                }            
             
-            
-            
-            transcription_prompt =  f"""
+            transcription_prompt = f"""
             You are a highly meticulous and detail-oriented transcriptionist specializing in accurately transcribing handwritten notes into well-structured Markdown documents. Your transcriptions are known for their precision, clarity, and adherence to formatting standards. You are tasked with transcribing the notes titled: '{metadata['title']}'.
 
             Follow these instructions rigorously:
@@ -121,20 +114,9 @@ class NoteProcessor:
             4. **Structure and Emphasis:** Preserve the original structure and formatting of the notes. This includes bullet points, numbered lists, headings, underlines, and any other emphasis techniques used in the original.
             5. **Markdown Headers:** Use appropriate Markdown headers (##, ###, etc.) to reflect the hierarchical structure of the content.
             6. **Illegible Text:** If any part of the text is illegible or uncertain, indicate it using brackets like this: `[illegible]` or `[unclear: possible word?]`.
-            7. **Context (If Applicable):** These notes are related to the field of [Specify Domain, e.g., 'organic chemistry', '18th-century literature']. This context may be helpful for accurate transcription.
-            8. **Output Format:** Output the transcription in pure Markdown format. Do not use a code block.
-            9. **Minimize Whitespace:** Minimize vertical whitespace throughout the document. Only use a single blank line between paragraphs, headings, or other elements when necessary for clarity or to signal a significant shift in topic. Do not skip lines unnecessarily.
+            7. **Output Format:** Output the transcription directly in Markdown format. Do not wrap the content in code blocks or use markdown delimiters (```).
 
-            **Summary Section:**
-
-            After transcribing all pages, create a comprehensive summary section at the end of the document. This summary should be concise yet informative and include:
-
-            *   **Key Topics:** List the main subjects and themes covered in the notes.
-            *   **Main Points:** Briefly summarize the most important points and conclusions.
-            *   **Action Items:** If the notes specify any tasks or actions to be taken, list them clearly.
-            *   **Questions Raised:** If the notes contain any explicit or implicit questions, document them here.
-
-            Aim for a balance between brevity and comprehensiveness in your summary. Your goal is to create a transcription that is both accurate to the original handwritten notes and easy to read and understand in its Markdown format, adhering to the pure Markdown and minimal whitespace requirements. Please begin the transcription.
+            Aim for a balance between accuracy and readability. Your goal is to create a transcription that is both faithful to the original handwritten notes and easy to read and understand in its Markdown format. Begin the transcription immediately without any preamble.
             """
             
             transcription = self._generate_content(transcription_prompt, images)
