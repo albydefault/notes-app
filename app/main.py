@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from scanner import DocumentScanner
 from processor import NoteProcessor
 from db import DB_PATH, init_db, save_generated_content
-from config import UPLOAD_DIR, PROCESSED_DIR, GEMINI_API_KEY
+from config import *
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -86,7 +86,7 @@ async def upload_files(files: List[UploadFile]):
 
     return {"message": f"Processed {len(processed_files)} files", "processed_files": processed_files}
 
-@app.post("/process-")
+@app.post("/process-notes")
 async def process_notes():
     """Generate content from the most recent note set."""
     conn = sqlite3.connect(DB_PATH)
@@ -103,8 +103,8 @@ async def process_notes():
 
     try:
         # Step 1: Generate transcription
-        content = processor.process_notes("app/processed")
-        transcription_path = PROCESSED_DIR / f"transcription_{note_id}.md"
+        content = processor.transcribe_notes("app/processed")
+        transcription_path = PROCESSED_NOTES_DIR / f"transcription_{note_id}.md"
         processor.save_markdown(content, transcription_path)
         save_generated_content(cursor, note_id, "transcription", transcription_path.name, str(transcription_path))
 
@@ -112,12 +112,8 @@ async def process_notes():
         with open(transcription_path, "r", encoding="utf-8") as f:
             transcription_text = f.read()
         
-        exposition_prompt = f"""
-        Rewrite the following notes into a comprehensive guide with added examples, explanations, and additional context:
-        {transcription_text}
-        """
-        exposition_content = processor.model.generate_content([exposition_prompt])
-        exposition_path = PROCESSED_DIR / f"exposition_{note_id}.md"
+        exposition_content = processor.explain_notes(transcription_text)
+        exposition_path = PROCESSED_NOTES_DIR / f"exposition_{note_id}.md"
         with open(exposition_path, "w", encoding="utf-8") as f:
             f.write(exposition_content.text)
         save_generated_content(cursor, note_id, "exposition", exposition_path.name, str(exposition_path))
@@ -125,14 +121,10 @@ async def process_notes():
         # Step 3: Generate question sheet using exposition
         with open(exposition_path, "r", encoding="utf-8") as f:
             exposition_text = f.read()
+
         
-        question_prompt = f"""
-        Create a list of questions based on the following detailed notes to test understanding.
-        Include questions of varying difficulty and categorize them by topic:
-        {exposition_text}
-        """
-        question_content = processor.model.generate_content([question_prompt])
-        question_path = PROCESSED_DIR / f"questions_{note_id}.md"
+        question_content = processor.generate_questions(exposition_text)
+        question_path = PROCESSED_NOTES_DIR / f"questions_{note_id}.md"
         with open(question_path, "w", encoding="utf-8") as f:
             f.write(question_content.text)
         save_generated_content(cursor, note_id, "questions", question_path.name, str(question_path))
@@ -142,6 +134,8 @@ async def process_notes():
 
         return {
             "message": "Notes processed successfully.",
+            "title": content["title"],
+            "summary": content["summary"],
             "files": [
                 {"type": "transcription", "file": f"/processed_notes/{transcription_path.name}"},
                 {"type": "exposition", "file": f"/processed_notes/{exposition_path.name}"},
