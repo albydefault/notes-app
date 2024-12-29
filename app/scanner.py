@@ -9,8 +9,8 @@ import os
 from PIL import Image
 
 class DocumentScanner:
-    def __init__(self, target_height: int = 842):  # A4 height at 100 DPI
-        self.target_height = target_height
+    def __init__(self, target_width: int = 595):  # A4 height at 100 DPI
+        self.target_width = target_width
     
     def sanitize_filename(self, filename: str) -> str:
         """Replace spaces and special characters with underscores."""
@@ -245,7 +245,8 @@ class DocumentScanner:
         return np.array(sorted(corners, key=lambda p: np.arctan2(p[1] - center[1], p[0] - center[0]) + np.pi))
 
     def _perspective_transform(self, image: np.ndarray, corners: np.ndarray) -> np.ndarray:
-        """Apply perspective transform with proper output size."""
+        """Apply perspective transform with target width."""
+        # Calculate current width and height from corners
         width = max(
             np.linalg.norm(corners[0] - corners[1]),
             np.linalg.norm(corners[2] - corners[3])
@@ -255,14 +256,14 @@ class DocumentScanner:
             np.linalg.norm(corners[1] - corners[2])
         )
         
-        scale = self.target_height / height
-        target_width = int(width * scale)
-        target_height = self.target_height
+        # Scale based on target width instead of height
+        scale = self.target_width / width
+        target_height = int(height * scale)
         
         dst_points = np.array([
             [0, 0],
-            [target_width - 1, 0],
-            [target_width - 1, target_height - 1],
+            [self.target_width - 1, 0],
+            [self.target_width - 1, target_height - 1],
             [0, target_height - 1]
         ], dtype=np.float32)
         
@@ -271,4 +272,4 @@ class DocumentScanner:
             dst_points
         )
         
-        return cv2.warpPerspective(image, transform_matrix, (target_width, target_height))
+        return cv2.warpPerspective(image, transform_matrix, (self.target_width, target_height))

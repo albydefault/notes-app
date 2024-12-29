@@ -1,0 +1,9 @@
+./config.py
+./app/db.py
+./app/scanner.py
+./app/__init__.py
+./app/processor.py
+./app/templates/index.html
+./app/main.py
+./tests/__init__.py
+./tests/gemini-api-test.py

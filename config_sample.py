@@ -27,4 +27,4 @@ MAX_UPLOAD_SIZE_MB = 10
 MAX_FILES_PER_SESSION = 50
 
 # Your Gemini API key
-GEMINI_API_KEY = "AIzaSyC15gYSaQit8jzj2t22OrjaVmH2DNRxhLY"
+GEMINI_API_KEY = "api-key-goes-here"
