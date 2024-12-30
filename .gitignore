@@ -8,3 +8,4 @@ venv/
 # App specific
 config.py
 data/
+ideas.md
