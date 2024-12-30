@@ -10,6 +10,9 @@
 {% block content %}
 <h1>Notes Scanner</h1>
 
+<!-- Add this div for status messages -->
+<div id="status" style="display: none;"></div>
+
 <div class="upload-area">
     <h2>Upload Images</h2>
     <input type="file" id="fileInput" multiple accept="image/*">
@@ -18,7 +21,7 @@
     <div id="processingSpinner"></div>
 </div>
 
-<div id="status"></div>
+<div id="preview"></div>
 <div id="results"></div>
 {% endblock %}
 

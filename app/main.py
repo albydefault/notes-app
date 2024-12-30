@@ -42,39 +42,58 @@ async def home(request: Request):
 @app.post("/upload")
 async def upload_files(files: List[UploadFile]):
     """Handle file uploads and process images."""
+    logging.info("=== Upload endpoint called ===")
+    logging.info(f"Received {len(files)} files")
+    
     if not files:
+        logging.warning("No files received in request")
         raise HTTPException(status_code=400, detail="No files uploaded")
 
     # Create new session for this upload
     session_id = db.create_session()
+    logging.info(f"Created new session: {session_id}")
     processed_files = []
 
     try:
         for file in files:
+            logging.info(f"Processing file: {file.filename}")
+            
             # Validate file extension
             if Path(file.filename).suffix.lower() not in ALLOWED_EXTENSIONS:
+                logging.warning(f"Invalid file type: {file.filename}")
                 raise HTTPException(status_code=400, 
                                  detail=f"Unsupported file type: {file.filename}")
 
             # Save uploaded file
             upload_path = UPLOAD_DIR / f"{session_id}_{file.filename}"
+            logging.info(f"Saving file to: {upload_path}")
+            
             with open(upload_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             
+            logging.info(f"File saved successfully: {upload_path}")
+            
             # Track original file
             db.add_file(session_id, file.filename, str(upload_path), "original")
+            logging.info("File tracked in database")
 
             # Process the image
+            logging.info("Starting image processing")
             processed_path = scanner.scan_image(upload_path)
             if processed_path:
+                logging.info(f"Image processed successfully: {processed_path}")
                 db.add_file(session_id, processed_path.name, str(processed_path), "scanned")
                 processed_files.append(f"/processed/{processed_path.name}")
+            else:
+                logging.error(f"Failed to process image: {file.filename}")
 
         if not processed_files:
+            logging.error("No files were successfully processed")
             db.update_session(session_id, {"status": "error"})
             raise HTTPException(status_code=400, detail="No files were successfully processed")
 
         db.update_session(session_id, {"status": "processing"})
+        logging.info("Upload processing completed successfully")
         
         return {
             "message": f"Processed {len(processed_files)} files",
@@ -83,9 +102,10 @@ async def upload_files(files: List[UploadFile]):
         }
 
     except Exception as e:
+        logging.error(f"Error during upload processing: {str(e)}")
         db.update_session(session_id, {"status": "error"})
-        logging.error(f"Error processing upload: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+    
 
 @app.post("/process-notes/{session_id}")
 async def process_notes(session_id: str):
