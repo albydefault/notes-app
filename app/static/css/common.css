@@ -1,0 +1,57 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.nav-links {
+    margin-bottom: 20px;
+}
+
+.nav-links a {
+    color: #007bff;
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+.nav-links a:hover {
+    text-decoration: underline;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.error {
+    padding: 15px;
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    color: #856404;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 8px;
+    color: #666;
+}
