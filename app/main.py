@@ -21,7 +21,8 @@ logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(m
 # Initialize app
 app = FastAPI(title="Notes Scanner")
 
-# Mount directories for file access
+# Mount static directories
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/processed", StaticFiles(directory=str(PROCESSED_DIR)), name="processed")
 app.mount("/notes", StaticFiles(directory=str(NOTES_DIR)), name="notes")
 
@@ -153,6 +154,67 @@ async def process_notes(session_id: str):
         db.update_session(session_id, {"status": "error"})
         logging.error(f"Error processing notes: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/sessions")
+async def list_sessions():
+    """Get list of all note sessions."""
+    try:
+        sessions = db.get_all_sessions()
+        return {
+            "sessions": [{
+                "id": session["id"],
+                "title": session["title"],
+                "created_at": session["created_at"],
+                "status": session["status"],
+                "summary": session["summary"]
+            } for session in sessions]
+        }
+    except Exception as e:
+        logging.error(f"Error listing sessions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get details of a specific session including its files."""
+    session = db.get_session_info(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Group files by type and transform paths to URLs
+    files = session.get('files', [])
+    organized_files = {
+        'scanned': [],
+        'generated': []
+    }
+    
+    for file in files:
+        file_type = file['file_type']
+        if file_type == 'scanned':
+            # Files in PROCESSED_DIR are mounted at /processed
+            organized_files['scanned'].append({
+                **file,
+                'file': f"/processed/{Path(file['file_path']).name}"
+            })
+        elif file_type in ['transcription', 'exposition', 'questions']:
+            # Files in NOTES_DIR are mounted at /notes
+            organized_files['generated'].append({
+                **file,
+                'file': f"/notes/{Path(file['file_path']).name}"
+            })
+    
+    return {
+        "id": session["id"],
+        "title": session["title"],
+        "created_at": session["created_at"],
+        "status": session["status"],
+        "summary": session["summary"],
+        "files": organized_files
+    }
+
+@app.get("/sessions-page")
+async def sessions_page(request: Request):
+    """Serve the sessions list page."""
+    return templates.TemplateResponse("sessions.html", {"request": request})
 
 if __name__ == "__main__":
     import uvicorn
