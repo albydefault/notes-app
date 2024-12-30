@@ -1,9 +1,20 @@
-./config.py
-./app/db.py
-./app/scanner.py
-./app/__init__.py
-./app/processor.py
-./app/templates/index.html
-./app/main.py
-./tests/__init__.py
-./tests/gemini-api-test.py
+app/
+├── static/
+│   ├── css/
+│   │   ├── common.css
+│   │   ├── index.css
+│   │   └── sessions.css
+│   └── js/
+│       ├── imageViewer.js
+│       ├── index.js
+│       └── sessions.js
+├── templates/
+│   ├── base.html
+│   ├── index.html
+│   └── sessions.html
+└── main.py
+data/
+├── uploads/
+├── processed/
+└── notes/
+config.py

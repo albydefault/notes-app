@@ -1,0 +1,21 @@
+<!-- app/templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Notes Scanner{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/sessions-page">Sessions</a>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,231 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes Scanner</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 40px 20px;
-            text-align: center;
-            margin: 20px 0;
-            background-color: white;
-            transition: border-color 0.3s ease;
-        }
+<!-- app/templates/index.html -->
+{% extends "base.html" %}
 
-        .upload-area:hover {
-            border-color: #666;
-        }
+{% block title %}Notes Scanner{% endblock %}
 
-        #fileInput {
-            margin-bottom: 15px;
-        }
+{% block styles %}
+<link rel="stylesheet" href="/static/css/index.css">
+{% endblock %}
 
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
+{% block content %}
+<h1>Notes Scanner</h1>
 
-        button:hover {
-            background-color: #0056b3;
-        }
+<div class="upload-area">
+    <h2>Upload Images</h2>
+    <input type="file" id="fileInput" multiple accept="image/*">
+    <br>
+    <button onclick="uploadFiles()" id="uploadButton">Upload and Process</button>
+    <div id="processingSpinner"></div>
+</div>
 
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
+<div id="status"></div>
+<div id="results"></div>
+{% endblock %}
 
-        #status {
-            margin: 20px 0;
-            padding: 10px;
-            border-radius: 4px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .processing {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        #results {
-            margin-top: 20px;
-        }
-
-        .processed-image {
-            background-color: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .processed-image img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-        }
-
-        .generated-links {
-            margin-top: 20px;
-        }
-
-        .generated-links a {
-            display: block;
-            margin-bottom: 5px;
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .generated-links a:hover {
-            text-decoration: underline;
-        }
-
-        #processingSpinner {
-            display: none;
-            margin: 10px auto;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #007bff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <h1>Notes Scanner</h1>
-    
-    <div class="upload-area">
-        <h2>Upload Images</h2>
-        <input type="file" id="fileInput" multiple accept="image/*">
-        <br>
-        <button onclick="uploadFiles()" id="uploadButton">Upload and Process</button>
-        <div id="processingSpinner"></div>
-    </div>
-
-    <div id="status"></div>
-    <div id="results"></div>
-
-    <script>
-        let currentSessionId = null;
-
-        async function uploadFiles() {
-            const fileInput = document.getElementById('fileInput');
-            const status = document.getElementById('status');
-            const results = document.getElementById('results');
-            const uploadButton = document.getElementById('uploadButton');
-            const spinner = document.getElementById('processingSpinner');
-            
-            if (fileInput.files.length === 0) {
-                status.className = 'error';
-                status.textContent = 'Please select at least one file.';
-                return;
-            }
-
-            uploadButton.disabled = true;
-            spinner.style.display = 'block';
-            status.className = 'processing';
-            status.textContent = 'Uploading and scanning images...';
-            results.innerHTML = '';
-
-            const formData = new FormData();
-            for (const file of fileInput.files) {
-                formData.append('files', file);
-            }
-            
-            try {
-                // Step 1: Upload and scan files
-                const uploadResponse = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!uploadResponse.ok) {
-                    throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-                }
-                
-                const uploadResult = await uploadResponse.json();
-                currentSessionId = uploadResult.session_id;
-                
-                // Display scanned images
-                results.innerHTML = uploadResult.processed_files.map(file => `
-                    <div class="processed-image">
-                        <img src="${file}" alt="Processed note">
-                    </div>
-                `).join('');
-
-                status.textContent = 'Processing with AI...';
-                
-                // Step 2: Process notes with AI
-                const processResponse = await fetch(`/process-notes/${currentSessionId}`, {
-                    method: 'POST'
-                });
-                
-                if (!processResponse.ok) {
-                    throw new Error(`AI processing failed: ${processResponse.statusText}`);
-                }
-                
-                const processResult = await processResponse.json();
-                
-                // Update status and display results
-                status.className = 'success';
-                status.textContent = 'Files processed successfully!';
-                
-                results.innerHTML += `
-                    <div>
-                        <h3>${processResult.title}</h3>
-                        <p><em>${processResult.summary}</em></p>
-                        <div class="generated-links">
-                            ${processResult.files.map(file => `
-                                <a href="${file.file}" target="_blank">
-                                    View ${file.type.charAt(0).toUpperCase() + file.type.slice(1)}
-                                </a>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-
-            } catch (error) {
-                status.className = 'error';
-                status.textContent = 'Error: ' + error.message;
-            } finally {
-                uploadButton.disabled = false;
-                spinner.style.display = 'none';
-            }
-        }
-    </script>
-</body>
-</html>
+{% block scripts %}
+<script src="/static/js/index.js"></script>
+{% endblock %}
