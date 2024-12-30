@@ -1,0 +1,183 @@
+/* app/static/css/sessions.css */
+.session-list {
+    display: grid;
+    gap: 20px;
+}
+
+.session-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.session-card:hover {
+    transform: translateY(-2px);
+}
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.session-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 0;
+}
+
+.session-date {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.session-summary {
+    color: #444;
+    margin: 10px 0;
+}
+
+.session-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: 500;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-processing {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-pending {
+    background-color: #e2e3e5;
+    color: #383d41;
+}
+
+.file-list {
+    margin-top: 15px;
+    display: none;
+}
+
+.session-card.expanded .file-list {
+    display: block;
+}
+
+.files-container {
+    margin-top: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.file-section {
+    margin-bottom: 15px;
+}
+
+.file-section h4 {
+    margin: 10px 0;
+    color: #495057;
+}
+
+.file-link {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: white;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.file-link:hover {
+    background: #e9ecef;
+    text-decoration: none;
+}
+
+.view-images-btn {
+    margin: 0;
+    width: 100%;
+}
+
+.image-viewer-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.image-viewer {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: hidden;
+    z-index: 1001;
+}
+
+.image-viewer img {
+    max-width: 100%;
+    max-height: calc(90vh - 100px);
+    object-fit: contain;
+}
+
+.image-viewer-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.image-viewer-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.image-counter {
+    text-align: center;
+    color: #666;
+}
+
+.nav-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.nav-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}

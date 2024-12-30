@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from typing import Dict, Any, List
 import uuid
 from datetime import datetime
+from typing import Optional
 
 class DatabaseManager:
     def __init__(self, db_path: Path):
@@ -130,3 +131,50 @@ class DatabaseManager:
                 **dict(session),
                 'files': [dict(f) for f in files]
             }
+
+    def get_all_sessions(self) -> List[Dict[str, Any]]:
+        """Get all sessions, ordered by creation date."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT id, title, created_at, status, summary 
+                FROM Sessions 
+                ORDER BY created_at DESC
+            """)
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_session_info(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get detailed session information including all files."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Get session info
+            cursor.execute("""
+                SELECT id, title, created_at, status, summary
+                FROM Sessions 
+                WHERE id = ?
+            """, (session_id,))
+            session = cursor.fetchone()
+            
+            if not session:
+                return None
+                
+            # Get associated files
+            cursor.execute("""
+                SELECT id, filename, file_path, file_type, created_at
+                FROM Files 
+                WHERE session_id = ?
+                ORDER BY created_at ASC
+            """, (session_id,))
+            files = cursor.fetchall()
+            
+            session_dict = dict(session)
+            session_dict['files'] = [dict(f) for f in files]
+            return session_dict
+
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session and all its files."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM Sessions WHERE id = ?", (session_id,))
+            return cursor.rowcount > 0

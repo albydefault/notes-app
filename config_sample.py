@@ -9,6 +9,8 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 PROCESSED_DIR = DATA_DIR / "processed"
 NOTES_DIR = DATA_DIR / "notes"
 DB_PATH = DATA_DIR / "notes.db"
+APP_DIR = BASE_DIR / "app"
+STATIC_DIR = APP_DIR / "static"
 
 # Ensure all directories exist
 for path in [DATA_DIR, UPLOAD_DIR, PROCESSED_DIR, NOTES_DIR]:
