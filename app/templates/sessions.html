@@ -5,6 +5,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="/static/css/sessions.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 {% endblock %}
 
 {% block content %}
@@ -22,9 +23,20 @@
         </div>
     </div>
 </div>
+<!-- Add this next to the image-viewer-overlay div -->
+<div class="markdown-viewer-overlay" onclick="markdownViewer.closeViewer()">
+    <div class="markdown-viewer" onclick="event.stopPropagation()">
+        <button class="markdown-viewer-close" onclick="markdownViewer.closeViewer()">×</button>
+        <div id="markdownContent"></div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
 <script src="/static/js/imageViewer.js"></script>
+<script src="/static/js/markdownViewer.js"></script>
 <script src="/static/js/sessions.js"></script>
 {% endblock %}

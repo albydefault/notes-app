@@ -181,3 +181,57 @@
     background: #ccc;
     cursor: not-allowed;
 }
+/* Add these styles alongside your image viewer styles */
+/* Update the overlay styles in sessions.css */
+.markdown-viewer-overlay {
+    display: none; /* Initially hidden */
+    position: fixed; /* Ensure it's positioned relative to the viewport */
+    top: 0;
+    left: 0;
+    width: 100vw; /* Full viewport width */
+    height: 100vh; /* Full viewport height */
+    background: rgba(0, 0, 0, 0.8); /* Semi-transparent dim background */
+    z-index: 9999; /* Place above all other elements */
+    justify-content: center; /* Center content horizontally */
+    align-items: center; /* Center content vertically */
+    overflow: hidden; /* Ensure content doesn't overflow */
+}
+
+
+.markdown-viewer {
+    position: relative; /* Positioned inside the overlay */
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto; /* Allow scrolling for large content */
+    z-index: 1001; /* Layered above the overlay background */
+}
+
+body.no-scroll {
+    overflow: hidden; /* Prevent background scrolling */
+}
+
+.markdown-viewer-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+#markdownContent {
+    padding: 20px;
+    margin-top: 20px;
+}
+
+#markdownContent h1 { font-size: 24px; font-weight: bold; margin: 16px 0; }
+#markdownContent h2 { font-size: 20px; font-weight: bold; margin: 14px 0; }
+#markdownContent h3 { font-size: 18px; font-weight: bold; margin: 12px 0; }
+#markdownContent p { margin: 8px 0; line-height: 1.6; }
+#markdownContent em { font-style: italic; }
+#markdownContent hr { margin: 16px 0; border: none; border-top: 1px solid #ddd; }

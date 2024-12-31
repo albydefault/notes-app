@@ -69,9 +69,11 @@ class SessionManager {
             'exposition': 'Detailed Explanation',
             'questions': 'Study Questions'
         };
-
+    
         return `
-            <a href="${file.file}" target="_blank" class="file-link">
+            <a href="${file.file}" 
+            class="file-link"
+            onclick="event.stopPropagation(); event.preventDefault(); markdownViewer.viewContent('${file.file}');">
                 ${icons[file.file_type] || '📄'} ${labels[file.file_type] || file.filename}
             </a>
         `;
@@ -148,7 +150,7 @@ class SessionManager {
 
     createSessionCard(session) {
         return `
-            <div class="session-card" onclick="sessionManager.toggleSession(this, '${session.id}')">
+            <div class="session-card" onclick="sessionManager.toggleSession(this, '${session.id}', event)">
                 <div class="session-header">
                     <h3 class="session-title">${session.title || 'Untitled Notes'}</h3>
                     <span class="session-status ${this.getStatusClass(session.status)}">
@@ -179,14 +181,19 @@ class SessionManager {
         `;
     }
 
-    toggleSession(element, sessionId) {
+    toggleSession(element, sessionId, event) {  // Add event parameter
+        // If the click was on a link, don't toggle
+        if (event.target.closest('.file-link')) {
+            return;
+        }
+    
         const wasExpanded = element.classList.contains('expanded');
         
         // Close all other sessions
         document.querySelectorAll('.session-card.expanded').forEach(card => {
             if (card !== element) card.classList.remove('expanded');
         });
-
+    
         element.classList.toggle('expanded');
         
         if (!wasExpanded) {
