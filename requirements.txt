@@ -1,11 +1,27 @@
-fastapi>=0.115.6
-uvicorn>=0.34.0
-python-multipart>=0.0.20
-opencv-python>=4.10.0
-google-generativeai>=0.8.3
-Jinja2>=3.1.5
-python-dotenv>=1.0.1
-numpy>=2.2.1
-scikit-learn>=1.6.0
-pillow>=11.0.0
-tenacity>=9.0.0
+# Web Framework and Dependencies
+fastapi>=0.100.0
+uvicorn>=0.22.0
+python-multipart>=0.0.6
+jinja2>=3.1.2
+
+# Image Processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Document Unwarping - Choose ONE of these variants:
+docuwarp[cpu]>=0.1.0  # For CPU-only processing
+# docuwarp[gpu]>=0.1.0  # For CUDA 11.x GPU processing
+# docuwarp[gpu]>=0.1.0 --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/  # For CUDA 12.x GPU processing
+
+# AI/ML Dependencies
+google-generativeai>=0.3.0
+
+# Utilities
+python-jose>=3.3.0
+tenacity>=8.2.2
+scikit-learn>=1.3.0  # For DBSCAN clustering in document detection
+logging>=0.5.1.2
+
+# Type Hints
+typing-extensions>=4.7.1
