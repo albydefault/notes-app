@@ -236,6 +236,64 @@ async def sessions_page(request: Request):
     """Serve the sessions list page."""
     return templates.TemplateResponse("sessions.html", {"request": request})
 
+@app.get("/view/notes/{filename}")
+async def view_markdown(request: Request, filename: str):
+    """Serve markdown file in a full-page view."""
+    file_path = NOTES_DIR / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        return templates.TemplateResponse(
+            "markdown_page.html", 
+            {
+                "request": request,
+                "content": content,
+                "title": filename
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/view/notes/{filename}")
+async def view_markdown(request: Request, filename: str):
+    """Serve markdown file in a full-page view."""
+    file_path = NOTES_DIR / filename
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+        
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            
+        # Extract a clean title from the filename
+        title = (filename
+                .replace('.md', '')
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .title())
+        
+        # If content starts with a # header, use that as title
+        if content.startswith('# '):
+            title = content.split('\n')[0].replace('# ', '')
+            content = '\n'.join(content.split('\n')[1:])
+            
+        return templates.TemplateResponse(
+            "markdown_page.html", 
+            {
+                "request": request,
+                "content": content,
+                "title": title
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

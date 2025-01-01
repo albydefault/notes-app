@@ -5,6 +5,7 @@
 
 {% block styles %}
 <link rel="stylesheet" href="/static/css/sessions.css">
+<link rel="stylesheet" href="/static/css/markdownViewer.css">
 {% endblock %}
 
 {% block content %}
@@ -22,9 +23,28 @@
         </div>
     </div>
 </div>
+
+<div class="markdown-viewer-overlay" onclick="markdownViewer.closeViewer()">
+    <div class="markdown-viewer" onclick="event.stopPropagation()">
+        <div class="markdown-viewer-controls">
+            <h3 class="markdown-viewer-title">Document</h3>
+            <div class="markdown-viewer-actions">
+                <button class="markdown-viewer-link" onclick="markdownViewer.openInCurrentTab()">
+                    Open Here
+                </button>
+                <button class="markdown-viewer-link" onclick="markdownViewer.openInNewTab()">
+                    Open in New Tab
+                </button>
+                <button class="markdown-viewer-close" onclick="markdownViewer.closeViewer()">×</button>
+            </div>
+        </div>
+        <div class="markdown-viewer-content markdown-content"></div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/markdownViewer.js"></script>
 <script src="/static/js/imageViewer.js"></script>
 <script src="/static/js/sessions.js"></script>
 {% endblock %}

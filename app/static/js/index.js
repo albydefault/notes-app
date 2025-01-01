@@ -144,7 +144,7 @@ class FileUploader {
                 <p class="summary">${result.summary}</p>
                 <div class="generated-links">
                     ${result.files.map(file => `
-                        <a href="${file.file}" target="_blank" class="result-link">
+                        <a href="/view${file.file}" target="_blank" class="result-link">
                             <span class="link-icon">📄</span>
                             <span class="link-text">View ${file.type.charAt(0).toUpperCase() + file.type.slice(1)}</span>
                         </a>

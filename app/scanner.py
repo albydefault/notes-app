@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 import logging
 from PIL import Image
+from PIL.ExifTags import TAGS
 from docuwarp.unwarp import Unwarp
 
 class DocumentScanner:
@@ -25,15 +26,14 @@ class DocumentScanner:
         import re
         return re.sub(r'[^\w\-_.]', '_', filename)
 
-    def find_document_end(self, image: np.ndarray) -> Optional[int]:
-        """Find where the document ends by detecting the first significant change
-        in intensity scanning from top to bottom.
+    def find_document_boundaries(self, image: np.ndarray) -> tuple[int, int]:
+        """Find document top and bottom boundaries using rolling intensity analysis.
         
         Args:
             image: CV2 image array
             
         Returns:
-            Optional[int]: Y-coordinate of document end or None if detection fails
+            tuple[int, int]: (top_y, bottom_y) coordinates
         """
         # Convert to grayscale if needed
         if len(image.shape) == 3:
@@ -46,50 +46,90 @@ class DocumentScanner:
         # Calculate mean intensity for each row
         row_means = np.mean(gray, axis=1)
         
-        # Get baseline from the first few rows (which we know are part of the document)
-        baseline = np.mean(row_means[:20])
-        threshold = 50  # Minimum intensity difference to consider significant
+        # Calculate rolling average
+        window_size = 20
+        rolling_avg = np.convolve(row_means, np.ones(window_size)/window_size, mode='valid')
         
-        # Scan from top to bottom looking for first significant change
-        for i in range(20, height):
-            if abs(row_means[i] - baseline) > threshold:
-                # Back up a few pixels to ensure we include all content
-                return min(height, i + 5)
+        # Calculate rate of change
+        intensity_change = np.diff(rolling_avg)
+        
+        # Find significant changes
+        threshold = np.std(intensity_change) * 2  # Adaptive threshold
+        
+        # Find top boundary
+        top_y = 0
+        for i in range(window_size, len(intensity_change)):
+            if abs(intensity_change[i]) > threshold:
+                # Found significant change - roll back by 50 pixels
+                top_y = max(0, i - 25)
+                break
                 
-        return None
+        # If no significant change at top, keep original top
+        if top_y == 0:
+            logging.info("No significant intensity change found at top, using original top")
+        
+        # Find bottom boundary
+        bottom_y = height
+        for i in range(len(intensity_change)-1, window_size, -1):
+            if abs(intensity_change[i]) > threshold:
+                # Found significant change - add small padding
+                bottom_y = min(height, i + 25)
+                break
+        
+        logging.info(f"Found document boundaries - Top: {top_y}, Bottom: {bottom_y}")
+        return top_y, bottom_y
 
     def crop_to_content(self, image: Image.Image) -> Image.Image:
-        """Find where the document ends and crop to it."""
+        """Find document boundaries and crop to them."""
         # Convert PIL Image to CV2 format for processing
         cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        doc_end = self.find_document_end(cv_image)
         
-        if doc_end is None:
-            logging.warning("Could not detect document end, using original image")
-            return image
-            
-        # Crop from top to detected end
-        return image.crop((0, 0, image.width, doc_end))
+        # Find boundaries
+        top_y, bottom_y = self.find_document_boundaries(cv_image)
+        
+        # Crop image
+        return image.crop((0, top_y, image.width, bottom_y))
 
     def scan_image(self, image_path: Path) -> Optional[Path]:
         """Process a single image and return path to processed image."""
         try:
             logging.info(f"Starting processing for image: {image_path}")
-            
+        
             # Load image with PIL
             original_image = Image.open(str(image_path))
-            if not original_image:
-                logging.error(f"Could not read image at {image_path}")
-                raise ValueError(f"Could not read image at {image_path}")
+            
+            # Check EXIF orientation
+            exif = original_image.getexif()
+            if exif and exif.get(274):  # 274 is the orientation tag
+                orientation = exif.get(274)
+                logging.info(f"EXIF Orientation: {orientation}")
+                # Define rotations based on EXIF orientation values
+                orientation_to_rotation = {
+                    1: 0,      # Normal
+                    3: 180,    # Rotate 180
+                    6: -90,    # Rotate 270 CCW (same as 90 CW)
+                    8: 90      # Rotate 90 CCW
+                }
+                if orientation in orientation_to_rotation:
+                    rotation = orientation_to_rotation[orientation]
+                    if rotation != 0:
+                        original_image = original_image.rotate(rotation, expand=True)
+                        logging.info(f"Rotated image by {rotation} degrees based on EXIF orientation")
 
-            # Process image with Docuwarp
+            
+            
+            # Process with Docuwarp and log
             unwarped_image = self.unwarp.inference(original_image)
             if unwarped_image is None:
                 logging.error(f"Could not process image at {image_path}")
                 raise ValueError(f"Could not process image at {image_path}")
+            logging.info(f"Unwarped image dimensions: {unwarped_image.size}")
             
-            # Detect content and crop
+            # Log before cropping
+            logging.info(f"Image orientation before crop: {unwarped_image.size}")
             cropped_image = self.crop_to_content(unwarped_image)
+            logging.info(f"Image dimensions after crop: {cropped_image.size}")
+            
             
             # Resize to target width while maintaining aspect ratio
             orig_width, orig_height = cropped_image.size

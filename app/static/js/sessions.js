@@ -1,8 +1,13 @@
 // app/static/js/sessions.js
 class SessionManager {
     constructor() {
+        console.log('SessionManager constructor starting');
         this.sessionImages = {};
+        console.log('Setting up event listeners...');
+        this.setupEventListeners();
+        console.log('Loading sessions...');
         this.loadSessions();
+        console.log('SessionManager constructor complete');
     }
 
     formatDate(dateString) {
@@ -58,6 +63,7 @@ class SessionManager {
         `;
     }
 
+    // In the createFileLink function in sessions.js
     createFileLink(file) {
         const icons = {
             'transcription': '📝',
@@ -69,12 +75,17 @@ class SessionManager {
             'exposition': 'Detailed Explanation',
             'questions': 'Study Questions'
         };
-
-        return `
-            <a href="${file.file}" target="_blank" class="file-link">
+    
+        const linkHtml = `
+            <a href="#" 
+               data-markdown-file="${file.file}"
+               data-markdown-title="${labels[file.file_type] || file.filename}"
+               class="file-link markdown-link">
                 ${icons[file.file_type] || '📄'} ${labels[file.file_type] || file.filename}
             </a>
         `;
+        console.log('Created link HTML:', linkHtml);  // Add this line
+        return linkHtml;
     }
 
     async loadSession(sessionId, element) {
@@ -192,6 +203,26 @@ class SessionManager {
         if (!wasExpanded) {
             this.loadSession(sessionId, element);
         }
+    }
+
+    setupEventListeners() {
+        document.addEventListener('click', (e) => {
+            console.log('Click event:', e.target);  // Add this line
+            const link = e.target.closest('.markdown-link');
+            if (link) {
+                console.log('Found markdown link:', link);  // Add this line
+                e.preventDefault();
+                const file = link.dataset.markdownFile;
+                const title = link.dataset.markdownTitle;
+                console.log('Markdown link clicked:', { file, title });
+                
+                if (window.markdownViewer) {
+                    window.markdownViewer.viewMarkdown(file, title);
+                } else {
+                    console.error('MarkdownViewer not initialized');
+                }
+            }
+        });
     }
 }
 
