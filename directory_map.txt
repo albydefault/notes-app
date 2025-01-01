@@ -1,20 +1,36 @@
-app/
-├── static/
-│   ├── css/
-│   │   ├── common.css
-│   │   ├── index.css
-│   │   └── sessions.css
-│   └── js/
-│       ├── imageViewer.js
-│       ├── index.js
-│       └── sessions.js
-├── templates/
-│   ├── base.html
-│   ├── index.html
-│   └── sessions.html
-└── main.py
-data/
-├── uploads/
-├── processed/
-└── notes/
-config.py
+Directory map saved to directory_map.txt
+  │   ├── css
+│   │   │   ├── common.css
+│   │   │   ├── index.css
+│   │   │   ├── markdownPage.css
+│   │   │   ├── markdownViewer.css
+│   │   │   └── sessions.css
+│   │   └── js
+│   │       ├── components
+│   │       │   └── StatusAlert.js
+│   │       ├── imageViewer.js
+│   │       ├── index.js
+│   │       ├── markdownViewer.js
+│   │       └── sessions.js
+│   ├── templates
+│   │   ├── base.html
+│   │   ├── index.html
+│   │   ├── markdown_page.html
+│   │   └── sessions.html
+│   ├── __init__.py
+│   ├── db.py
+│   ├── main.py
+│   ├── processor.py
+│   └── scanner.py
+├── tests
+│   ├── __init__.py
+│   └── gemini-api-test.py
+├── tools
+│   └── directory_mapper.py
+├── .gitignore
+├── config.py
+├── config_sample.py
+├── directory_map.txt
+├── ideas.md
+├── readme.md
+└── requirements.txt
