@@ -88,7 +88,9 @@ class DocumentScanner:
         top_y, bottom_y = self.find_document_boundaries(cv_image)
         
         # Crop image
-        return image.crop((0, top_y, image.width, bottom_y))
+        # return image.crop((0, top_y, image.width, bottom_y))
+        logging.info(f"Skipping cropping for now")
+        return image # Skip cropping for now
 
     def scan_image(self, image_path: Path) -> Optional[Path]:
         """Process a single image and return path to processed image."""
