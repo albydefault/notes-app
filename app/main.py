@@ -126,7 +126,9 @@ async def process_notes(session_id: str):
         # Step 1: Generate transcription
         content = processor.transcribe_notes(image_paths)  # Now passing specific image paths
         transcription_path = NOTES_DIR / f"transcription_{session_id}.md"
-        processor.save_markdown(content, transcription_path)
+        # processor.save_markdown(content, transcription_path)
+        with open(transcription_path, "w", encoding="utf-8") as f:
+            f.write(content["content"])
         db.add_file(session_id, transcription_path.name, str(transcription_path), "transcription")
 
 
@@ -269,7 +271,7 @@ async def view_markdown(request: Request, filename: str):
         
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
+            content = f.read().strip()  # Strip any leading/trailing whitespace
             
         # Extract a clean title from the filename
         title = (filename
@@ -278,10 +280,11 @@ async def view_markdown(request: Request, filename: str):
                 .replace('-', ' ')
                 .title())
         
-        # If content starts with a # header, use that as title
+        # If content starts with a # header, use that as title and remove it
         if content.startswith('# '):
-            title = content.split('\n')[0].replace('# ', '')
-            content = '\n'.join(content.split('\n')[1:])
+            title_line = content.split('\n')[0]
+            title = title_line.replace('# ', '').strip()
+            content = '\n'.join(content.split('\n')[1:]).strip()
             
         return templates.TemplateResponse(
             "markdown_page.html", 
