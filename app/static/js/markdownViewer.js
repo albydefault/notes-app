@@ -98,8 +98,11 @@ class MarkdownViewer {
         
         titleDiv.textContent = title;
         
+        // Ensure content starts with a newline to prevent formatting issues
+        const formattedContent = content.trimStart();
+        
         // Use marked to parse the markdown
-        contentDiv.innerHTML = marked.parse(content);
+        contentDiv.innerHTML = marked.parse(formattedContent);
         
         viewer.style.display = 'block';
         document.body.classList.add('overlay-open');

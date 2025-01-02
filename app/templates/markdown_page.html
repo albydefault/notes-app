@@ -52,7 +52,7 @@
 
         // Get the content and render it
         const contentElement = document.getElementById('content');
-        const rawContent = contentElement.textContent;  // Get the raw markdown
+        const rawContent = contentElement.textContent.trimStart();  // Trim leading whitespace
         contentElement.innerHTML = marked.parse(rawContent);  // Parse and render it
 
         // Then render math
